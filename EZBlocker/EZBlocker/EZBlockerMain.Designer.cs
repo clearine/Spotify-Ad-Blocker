@@ -116,7 +116,6 @@
             // 
             this.Heartbeat.Enabled = true;
             this.Heartbeat.Interval = 60000;
-            this.Heartbeat.Tick += new System.EventHandler(this.Heartbeat_Tick);
             // 
             // VolumeMixerButton
             // 

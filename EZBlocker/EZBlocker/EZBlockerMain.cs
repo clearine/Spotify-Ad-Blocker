@@ -27,7 +27,7 @@ namespace EZBlocker
 
         public const string website = @"https://www.ericzhang.me/projects/spotify-ad-blocker-ezblocker/";
 
-        private Analytics a;
+
         private DateTime lastRequest;
         private string lastAction = "";
         private SpotifyPatcher patcher;
@@ -65,7 +65,6 @@ namespace EZBlocker
                             lastMessage = message;
                             StatusLabel.Text = message;
                             artistTooltip.SetToolTip(StatusLabel, artist);
-                            LogAction("/mute/" + artist);
                         }
                     }
                     else if (hook.IsPlaying() && !hook.WindowName.Equals("Spotify Free")) // Normal music
@@ -84,7 +83,6 @@ namespace EZBlocker
                             lastMessage = message;
                             StatusLabel.Text = message;
                             artistTooltip.SetToolTip(StatusLabel, artist);
-                            LogAction("/play/" + artist);
                         }
                     }
                     else if (hook.WindowName.Equals("Spotify Free"))
@@ -162,25 +160,6 @@ namespace EZBlocker
             }
         }
 
-        private void LogAction(string action)
-        {
-            if (lastAction.Equals(action) && DateTime.Now - lastRequest < TimeSpan.FromMinutes(5)) return;
-            Task.Run(() => a.LogAction(action));
-            lastAction = action;
-            lastRequest = DateTime.Now;
-        }
-
-        /**
-         * Send a request every 5 minutes to keep session alive
-         **/
-        private void Heartbeat_Tick(object sender, EventArgs e)
-        {
-            if (DateTime.Now - lastRequest > TimeSpan.FromMinutes(5))
-            {
-                LogAction("/heartbeat");
-            }
-        }
-
 
         private void Main_Load(object sender, EventArgs e)
         {
@@ -236,10 +215,8 @@ namespace EZBlocker
             // Set up Analytics
             if (String.IsNullOrEmpty(Properties.Settings.Default.CID))
             {
-                Properties.Settings.Default.CID = Analytics.GenerateCID();
                 Properties.Settings.Default.Save();
             }
-            a = new Analytics(Properties.Settings.Default.CID, Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
             // Start Spotify hook
             hook = new SpotifyHook();
@@ -250,7 +227,6 @@ namespace EZBlocker
 
             MainTimer.Enabled = true;
 
-            LogAction("/launch");
 
             Task.Run(() => CheckUpdate());
         }
@@ -334,7 +310,6 @@ namespace EZBlocker
                     }
                 }
                 MessageBox.Show(Properties.strings.BlockBannersRestart, "EZBlocker", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LogAction("/settings/blockBanners/" + BlockBannersCheckbox.Checked.ToString());
             }
             catch (Exception ex)
             {
@@ -354,7 +329,6 @@ namespace EZBlocker
             {
                 startupKey.DeleteValue("EZBlocker");
             }
-            LogAction("/settings/startup/" + StartupCheckbox.Checked.ToString());
         }
 
 
@@ -363,7 +337,6 @@ namespace EZBlocker
             if (!MainTimer.Enabled) return; // Still setting up UI
             Properties.Settings.Default.StartSpotify = SpotifyCheckbox.Checked;
             Properties.Settings.Default.Save();
-            LogAction("/settings/startSpotify/" + SpotifyCheckbox.Checked.ToString());
         }
 
         private void VolumeMixerButton_Click(object sender, EventArgs e)
@@ -371,7 +344,6 @@ namespace EZBlocker
             try
             {
                 Process.Start(volumeMixerPath);
-                LogAction("/button/volumeMixer");
             }
             catch (Exception)
             {
@@ -387,7 +359,6 @@ namespace EZBlocker
                 Clipboard.SetText(Properties.strings.ReportProblemClipboard.Replace("{0}", Assembly.GetExecutingAssembly().GetName().Version.ToString()).Replace("{1}", FileVersionInfo.GetVersionInfo(Properties.Settings.Default.SpotifyPath).FileVersion));
             }
             Process.Start(website);
-            LogAction("/button/website");
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
